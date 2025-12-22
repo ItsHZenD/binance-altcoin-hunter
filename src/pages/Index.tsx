@@ -32,12 +32,12 @@ const Index = () => {
                   <TrendingDown className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold">
-                    <span className="gradient-text">Altcoin</span> Scanner
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Lọc coin Binance đang giảm giá mạnh
-                  </p>
+                <h1 className="text-xl sm:text-2xl font-bold">
+                  <span className="gradient-text">Futures</span> Scanner
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Lọc coin Binance Futures đang giảm giá mạnh
+                </p>
                 </div>
               </div>
 

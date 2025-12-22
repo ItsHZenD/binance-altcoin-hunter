@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BinanceTicker, FilteredCoin, FilterSettings } from '@/types/binance';
 
-const BINANCE_API = 'https://api.binance.com/api/v3/ticker/24hr';
-
-const STABLECOINS = ['USDT', 'USDC', 'BUSD', 'TUSD', 'DAI', 'FDUSD'];
-const EXCLUDED_ASSETS = ['BTC', 'ETH', 'BNB', ...STABLECOINS];
+const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
 
 export function useBinanceData(settings: FilterSettings) {
   const [coins, setCoins] = useState<FilteredCoin[]>([]);
@@ -17,9 +14,9 @@ export function useBinanceData(settings: FilterSettings) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(BINANCE_API);
+      const response = await fetch(BINANCE_FUTURES_API);
       if (!response.ok) {
-        throw new Error('Failed to fetch Binance data');
+        throw new Error('Failed to fetch Binance Futures data');
       }
 
       const data: BinanceTicker[] = await response.json();
@@ -29,12 +26,6 @@ export function useBinanceData(settings: FilterSettings) {
         .filter((ticker) => {
           // Only include pairs with specified quote asset (USDT)
           if (!ticker.symbol.endsWith(settings.quoteAsset)) return false;
-
-          // Extract base asset
-          const baseAsset = ticker.symbol.replace(settings.quoteAsset, '');
-
-          // Exclude major coins and stablecoins
-          if (EXCLUDED_ASSETS.includes(baseAsset)) return false;
 
           // Check volume (quoteVolume is in USDT)
           const quoteVolume = parseFloat(ticker.quoteVolume);
