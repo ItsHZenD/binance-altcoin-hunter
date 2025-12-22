@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BinanceTicker, FilteredCoin, FilterSettings } from '@/types/binance';
 
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
 
-export function useBinanceData(settings: FilterSettings) {
+export function useBinanceData(settings: FilterSettings, autoRefresh: boolean = true) {
   const [coins, setCoins] = useState<FilteredCoin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -61,11 +62,26 @@ export function useBinanceData(settings: FilterSettings) {
 
   useEffect(() => {
     fetchData();
-
-    // Auto refresh every 30 seconds
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
   }, [fetchData]);
+
+  useEffect(() => {
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Set new interval if auto refresh is enabled
+    if (autoRefresh) {
+      intervalRef.current = setInterval(fetchData, 30000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [autoRefresh, fetchData]);
 
   return { coins, loading, error, lastUpdate, refetch: fetchData };
 }
