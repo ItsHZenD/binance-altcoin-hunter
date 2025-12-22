@@ -105,7 +105,7 @@ export function CoinTable({ coins }: CoinTableProps) {
                 </TableCell>
                 <TableCell className="text-center">
                   <a
-                    href={`https://www.binance.com/en/trade/${coin.baseAsset}_${coin.quoteAsset}`}
+                    href={`https://www.binance.com/en/futures/${coin.symbol}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
