@@ -32,7 +32,7 @@ export interface FilteredCoin {
   quoteVolume24h: number;
   highPrice: number;
   lowPrice: number;
-  hasTwoRedCandles: boolean;
+  redCandleCount: number;
 }
 
 export interface KlineData {
@@ -49,4 +49,5 @@ export interface FilterSettings {
   minVolume: number;
   minPriceDropPercent: number;
   quoteAsset: string;
+  redCandleDays: number;
 }

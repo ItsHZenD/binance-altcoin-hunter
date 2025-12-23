@@ -14,6 +14,7 @@ const Index = () => {
     minVolume: 5,
     minPriceDropPercent: 3,
     quoteAsset: 'USDT',
+    redCandleDays: 2,
   });
   const [autoRefresh, setAutoRefresh] = useState(true);
 

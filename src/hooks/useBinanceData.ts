@@ -4,23 +4,30 @@ import { BinanceTicker, FilteredCoin, FilterSettings } from '@/types/binance';
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
 const BINANCE_KLINES_API = 'https://fapi.binance.com/fapi/v1/klines';
 
-// Check if the last 2 daily candles are red (close < open)
-async function checkTwoRedCandles(symbol: string): Promise<boolean> {
+// Count consecutive red candles from the most recent days
+async function countRedCandles(symbol: string, days: number): Promise<number> {
   try {
     const response = await fetch(
-      `${BINANCE_KLINES_API}?symbol=${symbol}&interval=1d&limit=2`
+      `${BINANCE_KLINES_API}?symbol=${symbol}&interval=1d&limit=${days}`
     );
-    if (!response.ok) return false;
+    if (!response.ok) return 0;
     
     const klines = await response.json();
-    if (klines.length < 2) return false;
+    if (klines.length < days) return 0;
     
     // Kline format: [openTime, open, high, low, close, volume, ...]
     const isRedCandle = (kline: any[]) => parseFloat(kline[4]) < parseFloat(kline[1]);
     
-    return isRedCandle(klines[0]) && isRedCandle(klines[1]);
+    let redCount = 0;
+    for (const kline of klines) {
+      if (isRedCandle(kline)) {
+        redCount++;
+      }
+    }
+    
+    return redCount;
   } catch {
-    return false;
+    return 0;
   }
 }
 
@@ -62,10 +69,10 @@ export function useBinanceData(settings: FilterSettings, autoRefresh: boolean = 
         return true;
       });
 
-      // Check for 2 red candles for each coin (batch with rate limit consideration)
+      // Check for red candles for each coin (batch with rate limit consideration)
       const coinsWithCandles = await Promise.all(
         preFiltered.map(async (ticker): Promise<FilteredCoin> => {
-          const hasTwoRedCandles = await checkTwoRedCandles(ticker.symbol);
+          const redCandleCount = await countRedCandles(ticker.symbol, settings.redCandleDays);
           return {
             symbol: ticker.symbol,
             baseAsset: ticker.symbol.replace(settings.quoteAsset, ''),
@@ -76,14 +83,14 @@ export function useBinanceData(settings: FilterSettings, autoRefresh: boolean = 
             quoteVolume24h: parseFloat(ticker.quoteVolume),
             highPrice: parseFloat(ticker.highPrice),
             lowPrice: parseFloat(ticker.lowPrice),
-            hasTwoRedCandles,
+            redCandleCount,
           };
         })
       );
 
-      // Only include coins with 2 red candles
+      // Only include coins with required number of red candles
       const filtered = coinsWithCandles
-        .filter((coin) => coin.hasTwoRedCandles)
+        .filter((coin) => coin.redCandleCount >= settings.redCandleDays)
         .sort((a, b) => a.priceChangePercent - b.priceChangePercent);
 
       setCoins(filtered);
