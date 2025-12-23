@@ -32,6 +32,17 @@ export interface FilteredCoin {
   quoteVolume24h: number;
   highPrice: number;
   lowPrice: number;
+  hasTwoRedCandles: boolean;
+}
+
+export interface KlineData {
+  openTime: number;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
+  closeTime: number;
 }
 
 export interface FilterSettings {
