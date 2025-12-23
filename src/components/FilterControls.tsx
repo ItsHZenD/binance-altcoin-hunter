@@ -1,6 +1,7 @@
 import { FilterSettings } from '@/types/binance';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings2 } from 'lucide-react';
 
 interface FilterControlsProps {
@@ -18,7 +19,7 @@ export function FilterControls({ settings, onSettingsChange }: FilterControlsPro
         <h2 className="text-lg font-semibold">Bộ lọc</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="minVolume" className="text-muted-foreground">
             Volume 24h tối thiểu (triệu USD)
@@ -57,6 +58,32 @@ export function FilterControls({ settings, onSettingsChange }: FilterControlsPro
             min={0}
             step={0.5}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="redCandleDays" className="text-muted-foreground">
+            Số ngày nến đỏ liên tiếp
+          </Label>
+          <Select
+            value={settings.redCandleDays.toString()}
+            onValueChange={(value) =>
+              onSettingsChange({
+                ...settings,
+                redCandleDays: parseInt(value),
+              })
+            }
+          >
+            <SelectTrigger className="font-mono bg-secondary border-border focus:border-primary">
+              <SelectValue placeholder="Chọn số ngày" />
+            </SelectTrigger>
+            <SelectContent>
+              {[1, 2, 3, 4, 5].map((day) => (
+                <SelectItem key={day} value={day.toString()}>
+                  {day} ngày
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
