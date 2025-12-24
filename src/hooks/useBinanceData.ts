@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { BinanceTicker, FilteredCoin, FilterSettings } from '@/types/binance';
+import { BinanceTicker, FilteredCoin, FilterSettings, FilterMode } from '@/types/binance';
 
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/ticker/24hr';
 const BINANCE_KLINES_API = 'https://fapi.binance.com/fapi/v1/klines';
 
-// Count consecutive red candles from the most recent days
-async function countRedCandles(symbol: string, days: number): Promise<number> {
+// Count candles of specified color from the most recent days
+async function countCandles(symbol: string, days: number, mode: FilterMode): Promise<number> {
   try {
     const response = await fetch(
       `${BINANCE_KLINES_API}?symbol=${symbol}&interval=1d&limit=${days}`
@@ -16,16 +16,20 @@ async function countRedCandles(symbol: string, days: number): Promise<number> {
     if (klines.length < days) return 0;
     
     // Kline format: [openTime, open, high, low, close, volume, ...]
-    const isRedCandle = (kline: any[]) => parseFloat(kline[4]) < parseFloat(kline[1]);
+    const isTargetCandle = (kline: any[]) => {
+      const close = parseFloat(kline[4]);
+      const open = parseFloat(kline[1]);
+      return mode === 'bearish' ? close < open : close > open;
+    };
     
-    let redCount = 0;
+    let count = 0;
     for (const kline of klines) {
-      if (isRedCandle(kline)) {
-        redCount++;
+      if (isTargetCandle(kline)) {
+        count++;
       }
     }
     
-    return redCount;
+    return count;
   } catch {
     return 0;
   }
@@ -62,17 +66,23 @@ export function useBinanceData(settings: FilterSettings, autoRefresh: boolean = 
         const quoteVolume = parseFloat(ticker.quoteVolume);
         if (quoteVolume < settings.minVolume * 1_000_000) return false;
 
-        // Check price drop (negative percentage, greater than threshold)
+        // Check price change based on mode
         const priceChangePercent = parseFloat(ticker.priceChangePercent);
-        if (priceChangePercent >= -settings.minPriceDropPercent) return false;
+        if (settings.mode === 'bearish') {
+          // For bearish: price must have dropped by at least the threshold
+          if (priceChangePercent >= -settings.minPriceChangePercent) return false;
+        } else {
+          // For bullish: price must have gained by at least the threshold
+          if (priceChangePercent <= settings.minPriceChangePercent) return false;
+        }
 
         return true;
       });
 
-      // Check for red candles for each coin (batch with rate limit consideration)
+      // Check for candles for each coin
       const coinsWithCandles = await Promise.all(
         preFiltered.map(async (ticker): Promise<FilteredCoin> => {
-          const redCandleCount = await countRedCandles(ticker.symbol, settings.redCandleDays);
+          const candleCount = await countCandles(ticker.symbol, settings.candleDays, settings.mode);
           return {
             symbol: ticker.symbol,
             baseAsset: ticker.symbol.replace(settings.quoteAsset, ''),
@@ -83,15 +93,19 @@ export function useBinanceData(settings: FilterSettings, autoRefresh: boolean = 
             quoteVolume24h: parseFloat(ticker.quoteVolume),
             highPrice: parseFloat(ticker.highPrice),
             lowPrice: parseFloat(ticker.lowPrice),
-            redCandleCount,
+            candleCount,
           };
         })
       );
 
-      // Only include coins with required number of red candles
+      // Only include coins with required number of candles
       const filtered = coinsWithCandles
-        .filter((coin) => coin.redCandleCount >= settings.redCandleDays)
-        .sort((a, b) => a.priceChangePercent - b.priceChangePercent);
+        .filter((coin) => coin.candleCount >= settings.candleDays)
+        .sort((a, b) => 
+          settings.mode === 'bearish' 
+            ? a.priceChangePercent - b.priceChangePercent  // Most negative first
+            : b.priceChangePercent - a.priceChangePercent  // Most positive first
+        );
 
       setCoins(filtered);
       setLastUpdate(new Date());

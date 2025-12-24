@@ -22,6 +22,8 @@ export interface BinanceTicker {
   count: number;
 }
 
+export type FilterMode = 'bearish' | 'bullish';
+
 export interface FilteredCoin {
   symbol: string;
   baseAsset: string;
@@ -32,7 +34,7 @@ export interface FilteredCoin {
   quoteVolume24h: number;
   highPrice: number;
   lowPrice: number;
-  redCandleCount: number;
+  candleCount: number; // red candles for bearish, green candles for bullish
 }
 
 export interface KlineData {
@@ -46,8 +48,9 @@ export interface KlineData {
 }
 
 export interface FilterSettings {
+  mode: FilterMode;
   minVolume: number;
-  minPriceDropPercent: number;
+  minPriceChangePercent: number; // drop for bearish, gain for bullish
   quoteAsset: string;
-  redCandleDays: number;
+  candleDays: number;
 }
