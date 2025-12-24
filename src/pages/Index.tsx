@@ -121,8 +121,8 @@ const Index = () => {
           {/* Data display */}
           {!loading && !error && (
             <>
-              <StatsHeader coins={coins} lastUpdate={lastUpdate} />
-              <CoinTable coins={coins} />
+              <StatsHeader coins={coins} lastUpdate={lastUpdate} mode={settings.mode} />
+              <CoinTable coins={coins} mode={settings.mode} />
             </>
           )}
 

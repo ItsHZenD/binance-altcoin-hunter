@@ -1,48 +1,57 @@
-import { FilteredCoin } from '@/types/binance';
-import { TrendingDown, Coins, DollarSign, Activity } from 'lucide-react';
+import { FilteredCoin, FilterMode } from '@/types/binance';
+import { TrendingDown, TrendingUp, Coins, DollarSign, Activity } from 'lucide-react';
 
 interface StatsHeaderProps {
   coins: FilteredCoin[];
   lastUpdate: Date | null;
+  mode: FilterMode;
 }
 
-export function StatsHeader({ coins, lastUpdate }: StatsHeaderProps) {
+export function StatsHeader({ coins, lastUpdate, mode }: StatsHeaderProps) {
+  const isBearish = mode === 'bearish';
+  
   const totalVolume = coins.reduce((sum, coin) => sum + coin.quoteVolume24h, 0);
-  const avgDrop = coins.length > 0
+  const avgChange = coins.length > 0
     ? coins.reduce((sum, coin) => sum + coin.priceChangePercent, 0) / coins.length
     : 0;
-  const maxDrop = coins.length > 0
-    ? Math.min(...coins.map(c => c.priceChangePercent))
+  const extremeChange = coins.length > 0
+    ? isBearish 
+      ? Math.min(...coins.map(c => c.priceChangePercent))
+      : Math.max(...coins.map(c => c.priceChangePercent))
     : 0;
+
+  const TrendIcon = isBearish ? TrendingDown : TrendingUp;
+  const trendColor = isBearish ? 'text-destructive' : 'text-green-500';
+  const trendBg = isBearish ? 'bg-destructive/10' : 'bg-green-500/10';
 
   const stats = [
     {
       icon: Coins,
       label: 'Số coin phù hợp',
       value: coins.length.toString(),
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      color: isBearish ? 'text-destructive' : 'text-green-500',
+      bgColor: isBearish ? 'bg-destructive/10' : 'bg-green-500/10',
     },
     {
       icon: DollarSign,
       label: 'Tổng Volume',
       value: `$${(totalVolume / 1_000_000).toFixed(1)}M`,
-      color: 'text-success',
-      bgColor: 'bg-success/10',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
     {
-      icon: TrendingDown,
-      label: 'Giảm trung bình',
-      value: `${avgDrop.toFixed(2)}%`,
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/10',
+      icon: TrendIcon,
+      label: isBearish ? 'Giảm trung bình' : 'Tăng trung bình',
+      value: `${isBearish ? '' : '+'}${avgChange.toFixed(2)}%`,
+      color: trendColor,
+      bgColor: trendBg,
     },
     {
       icon: Activity,
-      label: 'Giảm mạnh nhất',
-      value: `${maxDrop.toFixed(2)}%`,
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/10',
+      label: isBearish ? 'Giảm mạnh nhất' : 'Tăng mạnh nhất',
+      value: `${isBearish ? '' : '+'}${extremeChange.toFixed(2)}%`,
+      color: trendColor,
+      bgColor: trendBg,
     },
   ];
 
