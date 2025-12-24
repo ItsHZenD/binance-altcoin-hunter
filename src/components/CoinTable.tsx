@@ -1,4 +1,4 @@
-import { FilteredCoin } from '@/types/binance';
+import { FilteredCoin, FilterMode } from '@/types/binance';
 import {
   Table,
   TableBody,
@@ -7,11 +7,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { TrendingDown, ExternalLink } from 'lucide-react';
+import { TrendingDown, TrendingUp, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface CoinTableProps {
   coins: FilteredCoin[];
+  mode: FilterMode;
 }
 
 function formatNumber(num: number, decimals: number = 2): string {
@@ -34,12 +35,19 @@ function formatPrice(price: number): string {
   return price.toFixed(8);
 }
 
-export function CoinTable({ coins }: CoinTableProps) {
+export function CoinTable({ coins, mode }: CoinTableProps) {
+  const isBearish = mode === 'bearish';
+  const TrendIcon = isBearish ? TrendingDown : TrendingUp;
+  const trendColor = isBearish ? 'destructive' : 'green-500';
+  const gradientFrom = isBearish ? 'from-destructive/20' : 'from-green-500/20';
+  const gradientTo = isBearish ? 'to-destructive/5' : 'to-green-500/5';
+  const textColor = isBearish ? 'text-destructive' : 'text-green-500';
+
   if (coins.length === 0) {
     return (
       <div className="glass-card p-12 text-center fade-in">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-          <TrendingDown className="w-8 h-8 text-muted-foreground" />
+        <div className={`w-16 h-16 mx-auto mb-4 rounded-full ${isBearish ? 'bg-destructive/10' : 'bg-green-500/10'} flex items-center justify-center`}>
+          <TrendIcon className={`w-8 h-8 ${textColor}`} />
         </div>
         <h3 className="text-lg font-semibold mb-2">Không tìm thấy coin nào</h3>
         <p className="text-muted-foreground">
@@ -72,7 +80,7 @@ export function CoinTable({ coins }: CoinTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-bold text-primary">
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradientFrom} ${gradientTo} flex items-center justify-center font-bold ${textColor}`}>
                       {coin.baseAsset.slice(0, 2)}
                     </div>
                     <div>
@@ -87,10 +95,14 @@ export function CoinTable({ coins }: CoinTableProps) {
                 <TableCell className="text-right">
                   <Badge 
                     variant="outline" 
-                    className="font-mono border-destructive/30 bg-destructive/10 text-destructive"
+                    className={`font-mono ${
+                      isBearish 
+                        ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                        : 'border-green-500/30 bg-green-500/10 text-green-500'
+                    }`}
                   >
-                    <TrendingDown className="w-3 h-3 mr-1" />
-                    {coin.priceChangePercent.toFixed(2)}%
+                    <TrendIcon className="w-3 h-3 mr-1" />
+                    {isBearish ? '' : '+'}{coin.priceChangePercent.toFixed(2)}%
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right font-mono">
@@ -100,7 +112,7 @@ export function CoinTable({ coins }: CoinTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-mono text-sm">
-                  <div className="text-success">${formatPrice(coin.highPrice)}</div>
+                  <div className="text-green-500">${formatPrice(coin.highPrice)}</div>
                   <div className="text-destructive">${formatPrice(coin.lowPrice)}</div>
                 </TableCell>
                 <TableCell className="text-center">
@@ -108,7 +120,11 @@ export function CoinTable({ coins }: CoinTableProps) {
                     href={"https://www.binance.com/vi/futures/" + coin.symbol}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                      isBearish 
+                        ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
+                        : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <ExternalLink className="w-4 h-4" />
