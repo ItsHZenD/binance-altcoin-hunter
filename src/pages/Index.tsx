@@ -6,19 +6,21 @@ import { CoinTable } from '@/components/CoinTable';
 import { StatsHeader } from '@/components/StatsHeader';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { RefreshCw, TrendingDown, AlertCircle, Timer, TimerOff } from 'lucide-react';
+import { RefreshCw, TrendingDown, TrendingUp, AlertCircle, Timer, TimerOff } from 'lucide-react';
 
 const Index = () => {
   const [settings, setSettings] = useState<FilterSettings>({
+    mode: 'bearish',
     minVolume: 5,
-    minPriceDropPercent: 3,
+    minPriceChangePercent: 3,
     quoteAsset: 'USDT',
-    redCandleDays: 2,
+    candleDays: 2,
   });
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   const { coins, loading, error, lastUpdate, refetch } = useBinanceData(settings, autoRefresh);
+
+  const isBearish = settings.mode === 'bearish';
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,15 +33,21 @@ const Index = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-primary/50 pulse-glow">
-                  <TrendingDown className="w-6 h-6 text-primary-foreground" />
+                <div className={`p-2 rounded-xl bg-gradient-to-br ${isBearish ? 'from-destructive to-destructive/50' : 'from-green-500 to-green-500/50'} pulse-glow`}>
+                  {isBearish ? (
+                    <TrendingDown className="w-6 h-6 text-primary-foreground" />
+                  ) : (
+                    <TrendingUp className="w-6 h-6 text-primary-foreground" />
+                  )}
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold">
                     <span className="gradient-text">Futures</span> Scanner
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    Lọc coin Binance Futures đang giảm giá mạnh
+                    {isBearish 
+                      ? 'Lọc coin Binance Futures đang giảm giá mạnh'
+                      : 'Lọc coin Binance Futures đang tăng giá mạnh'}
                   </p>
                 </div>
               </div>
